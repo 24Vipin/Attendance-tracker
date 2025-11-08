@@ -1,0 +1,815 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Attendance Tracker</title>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100%;
+      color: #1a202c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem;
+      min-height: 100%;
+    }
+
+    .header {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #667eea;
+    }
+
+    .header-info {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #4a5568;
+      font-weight: 500;
+    }
+
+    .date-display {
+      font-size: 1.125rem;
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 1.5rem;
+    }
+
+    .attendance-section {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0 0 1.5rem 0;
+      color: #2d3748;
+    }
+
+    .add-student-form {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .form-input {
+      flex: 1;
+      min-width: 200px;
+      padding: 0.75rem 1rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5a67d8;
+      transform: translateY(-2px);
+    }
+
+    .btn-success {
+      background: #48bb78;
+      color: white;
+    }
+
+    .btn-warning {
+      background: #ed8936;
+      color: white;
+    }
+
+    .btn-danger {
+      background: #f56565;
+      color: white;
+    }
+
+    .btn-small {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+    }
+
+    .student-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .student-card {
+      background: #f7fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: all 0.3s ease;
+    }
+
+    .student-card.present {
+      border-color: #48bb78;
+      background: #f0fff4;
+    }
+
+    .student-card.absent {
+      border-color: #f56565;
+      background: #fff5f5;
+    }
+
+    .student-card.late {
+      border-color: #ed8936;
+      background: #fffaf0;
+    }
+
+    .student-header {
+      display: flex;
+      justify-content: between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .student-name {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #2d3748;
+      flex: 1;
+    }
+
+    .status-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-badge.present {
+      background: #c6f6d5;
+      color: #22543d;
+    }
+
+    .status-badge.absent {
+      background: #fed7d7;
+      color: #742a2a;
+    }
+
+    .status-badge.late {
+      background: #feebc8;
+      color: #7b341e;
+    }
+
+    .student-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .notes-input {
+      width: 100%;
+      margin-top: 0.75rem;
+      padding: 0.5rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .sidebar {
+      background: white;
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      height: fit-content;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      text-align: center;
+      padding: 1rem;
+      border-radius: 12px;
+      background: #f7fafc;
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      color: #4a5568;
+      margin: 0.25rem 0 0 0;
+    }
+
+    .stat-card.present .stat-number {
+      color: #48bb78;
+    }
+
+    .stat-card.absent .stat-number {
+      color: #f56565;
+    }
+
+    .stat-card.late .stat-number {
+      color: #ed8936;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #718096;
+    }
+
+    .empty-state h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.25rem;
+    }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #48bb78;
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+
+      .header h1 {
+        font-size: 2rem;
+      }
+
+      .header-info {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .add-student-form {
+        flex-direction: column;
+      }
+
+      .form-input {
+        min-width: auto;
+      }
+
+      .student-actions {
+        justify-content: center;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="container">
+   <header class="header">
+    <h1 id="app-title">Attendance Tracker</h1>
+    <div class="header-info">
+     <div class="info-item"><span>📚</span> <span id="class-name">Math 101</span>
+     </div>
+     <div class="info-item"><span>👨‍🏫</span> <span id="teacher-name">Mr. Johnson</span>
+     </div>
+     <div class="info-item"><span>📅</span> <span class="date-display" id="current-date"></span>
+     </div>
+    </div>
+   </header>
+   <main class="main-content">
+    <section class="attendance-section">
+     <h2 class="section-title">Student Attendance</h2>
+     <form class="add-student-form" id="add-student-form"><input type="text" id="student-name-input" class="form-input" placeholder="Enter student name" required> <button type="submit" class="btn btn-primary" id="add-student-btn"> <span>➕</span> Add Student </button>
+     </form>
+     <div id="student-list" class="student-list">
+      <div class="empty-state">
+       <h3>No students added yet</h3>
+       <p>Add students using the form above to start taking attendance</p>
+      </div>
+     </div>
+    </section>
+    <aside class="sidebar">
+     <h3 class="section-title">Today's Summary</h3>
+     <div class="stats-grid">
+      <div class="stat-card present">
+       <div class="stat-number" id="present-count">
+        0
+       </div>
+       <div class="stat-label">
+        Present
+       </div>
+      </div>
+      <div class="stat-card absent">
+       <div class="stat-number" id="absent-count">
+        0
+       </div>
+       <div class="stat-label">
+        Absent
+       </div>
+      </div>
+      <div class="stat-card late">
+       <div class="stat-number" id="late-count">
+        0
+       </div>
+       <div class="stat-label">
+        Late
+       </div>
+      </div>
+      <div class="stat-card">
+       <div class="stat-number" id="total-count">
+        0
+       </div>
+       <div class="stat-label">
+        Total
+       </div>
+      </div>
+     </div><button class="btn btn-primary" style="width: 100%; margin-bottom: 1rem;" onclick="exportAttendance()"> 📊 Export Report </button> <button class="btn btn-warning" style="width: 100%;" onclick="clearTodayAttendance()"> 🔄 Reset Today </button>
+    </aside>
+   </main>
+  </div>
+  <script>
+    const defaultConfig = {
+      background_color: "#667eea",
+      surface_color: "#ffffff",
+      text_color: "#1a202c",
+      primary_action_color: "#667eea",
+      secondary_action_color: "#48bb78",
+      font_family: "Inter",
+      font_size: 16,
+      app_title: "Attendance Tracker",
+      class_name: "Math 101",
+      teacher_name: "Mr. Johnson"
+    };
+
+    let currentData = [];
+    let isLoading = false;
+
+    const dataHandler = {
+      onDataChanged(data) {
+        currentData = data;
+        renderStudentList();
+        updateStats();
+      }
+    };
+
+    async function initializeApp() {
+      if (window.dataSdk) {
+        const result = await window.dataSdk.init(dataHandler);
+        if (!result.isOk) {
+          console.error("Failed to initialize data SDK");
+        }
+      }
+      
+      updateCurrentDate();
+      setupEventListeners();
+    }
+
+    function updateCurrentDate() {
+      const now = new Date();
+      const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      };
+      document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
+    }
+
+    function setupEventListeners() {
+      document.getElementById('add-student-form').addEventListener('submit', handleAddStudent);
+    }
+
+    async function handleAddStudent(e) {
+      e.preventDefault();
+      
+      if (currentData.length >= 999) {
+        showToast("Maximum limit of 999 students reached. Please remove some students first.", "error");
+        return;
+      }
+
+      const nameInput = document.getElementById('student-name-input');
+      const studentName = nameInput.value.trim();
+      
+      if (!studentName) return;
+
+      const addButton = document.getElementById('add-student-btn');
+      const originalContent = addButton.innerHTML;
+      
+      addButton.innerHTML = '<div class="loading"></div> Adding...';
+      addButton.disabled = true;
+
+      const studentRecord = {
+        student_name: studentName,
+        status: 'present',
+        date: new Date().toISOString(),
+        notes: '',
+        class_period: 'default'
+      };
+
+      if (window.dataSdk) {
+        const result = await window.dataSdk.create(studentRecord);
+        
+        if (result.isOk) {
+          nameInput.value = '';
+          showToast(`${studentName} added successfully!`);
+        } else {
+          showToast("Failed to add student. Please try again.", "error");
+        }
+      }
+
+      addButton.innerHTML = originalContent;
+      addButton.disabled = false;
+    }
+
+    function renderStudentList() {
+      const container = document.getElementById('student-list');
+      
+      if (currentData.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>No students added yet</h3>
+            <p>Add students using the form above to start taking attendance</p>
+          </div>
+        `;
+        return;
+      }
+
+      const todayRecords = getTodayRecords();
+      
+      container.innerHTML = todayRecords.map(student => `
+        <div class="student-card ${student.status}" data-id="${student.__backendId}">
+          <div class="student-header">
+            <div class="student-name">${student.student_name}</div>
+            <div class="status-badge ${student.status}">${student.status}</div>
+          </div>
+          <div class="student-actions">
+            <button class="btn btn-success btn-small" onclick="updateStatus('${student.__backendId}', 'present')">
+              ✓ Present
+            </button>
+            <button class="btn btn-warning btn-small" onclick="updateStatus('${student.__backendId}', 'late')">
+              ⏰ Late
+            </button>
+            <button class="btn btn-danger btn-small" onclick="updateStatus('${student.__backendId}', 'absent')">
+              ✗ Absent
+            </button>
+          </div>
+          <textarea 
+            class="notes-input" 
+            placeholder="Add notes..."
+            onchange="updateNotes('${student.__backendId}', this.value)"
+          >${student.notes || ''}</textarea>
+        </div>
+      `).join('');
+    }
+
+    function getTodayRecords() {
+      const today = new Date().toDateString();
+      return currentData.filter(record => {
+        const recordDate = new Date(record.date).toDateString();
+        return recordDate === today;
+      });
+    }
+
+    async function updateStatus(studentId, newStatus) {
+      const student = currentData.find(s => s.__backendId === studentId);
+      if (!student) return;
+
+      const updatedStudent = {
+        ...student,
+        status: newStatus,
+        date: new Date().toISOString()
+      };
+
+      if (window.dataSdk) {
+        const result = await window.dataSdk.update(updatedStudent);
+        
+        if (result.isOk) {
+          showToast(`${student.student_name} marked as ${newStatus}`);
+        } else {
+          showToast("Failed to update status. Please try again.", "error");
+        }
+      }
+    }
+
+    async function updateNotes(studentId, notes) {
+      const student = currentData.find(s => s.__backendId === studentId);
+      if (!student) return;
+
+      const updatedStudent = {
+        ...student,
+        notes: notes
+      };
+
+      if (window.dataSdk) {
+        await window.dataSdk.update(updatedStudent);
+      }
+    }
+
+    function updateStats() {
+      const todayRecords = getTodayRecords();
+      
+      const stats = {
+        present: todayRecords.filter(s => s.status === 'present').length,
+        absent: todayRecords.filter(s => s.status === 'absent').length,
+        late: todayRecords.filter(s => s.status === 'late').length,
+        total: todayRecords.length
+      };
+
+      document.getElementById('present-count').textContent = stats.present;
+      document.getElementById('absent-count').textContent = stats.absent;
+      document.getElementById('late-count').textContent = stats.late;
+      document.getElementById('total-count').textContent = stats.total;
+    }
+
+    function exportAttendance() {
+      const todayRecords = getTodayRecords();
+      const today = new Date().toLocaleDateString();
+      
+      let report = `Attendance Report - ${today}\n`;
+      report += `Class: ${document.getElementById('class-name').textContent}\n`;
+      report += `Teacher: ${document.getElementById('teacher-name').textContent}\n\n`;
+      
+      report += `Summary:\n`;
+      report += `Present: ${todayRecords.filter(s => s.status === 'present').length}\n`;
+      report += `Absent: ${todayRecords.filter(s => s.status === 'absent').length}\n`;
+      report += `Late: ${todayRecords.filter(s => s.status === 'late').length}\n`;
+      report += `Total: ${todayRecords.length}\n\n`;
+      
+      report += `Detailed List:\n`;
+      todayRecords.forEach(student => {
+        report += `${student.student_name}: ${student.status.toUpperCase()}`;
+        if (student.notes) {
+          report += ` (${student.notes})`;
+        }
+        report += `\n`;
+      });
+
+      const blob = new Blob([report], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `attendance-${today.replace(/\//g, '-')}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      showToast("Attendance report exported!");
+    }
+
+    function clearTodayAttendance() {
+      const message = document.createElement('div');
+      message.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); z-index: 1000; text-align: center; max-width: 400px;';
+      message.innerHTML = `
+        <h3 style="margin: 0 0 1rem 0; color: #f56565;">Reset Today's Attendance?</h3>
+        <p style="margin: 0 0 1.5rem 0; color: #4a5568;">This will remove all students added today. This action cannot be undone.</p>
+        <div style="display: flex; gap: 1rem; justify-content: center;">
+          <button onclick="confirmClearToday(); this.parentElement.parentElement.parentElement.remove(); document.getElementById('backdrop').remove();" style="background: #f56565; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer;">Yes, Reset</button>
+          <button onclick="this.parentElement.parentElement.parentElement.remove(); document.getElementById('backdrop').remove();" style="background: #e2e8f0; color: #4a5568; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer;">Cancel</button>
+        </div>
+      `;
+      
+      const backdrop = document.createElement('div');
+      backdrop.id = 'backdrop';
+      backdrop.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999;';
+      
+      document.body.appendChild(backdrop);
+      document.body.appendChild(message);
+    }
+
+    async function confirmClearToday() {
+      const todayRecords = getTodayRecords();
+      
+      for (const student of todayRecords) {
+        if (window.dataSdk) {
+          await window.dataSdk.delete(student);
+        }
+      }
+      
+      showToast("Today's attendance has been reset");
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      
+      if (type === 'error') {
+        toast.style.background = '#f56565';
+      }
+      
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    async function onConfigChange(config) {
+      const appTitle = config.app_title || defaultConfig.app_title;
+      const className = config.class_name || defaultConfig.class_name;
+      const teacherName = config.teacher_name || defaultConfig.teacher_name;
+      const backgroundColor = config.background_color || defaultConfig.background_color;
+      const surfaceColor = config.surface_color || defaultConfig.surface_color;
+      const textColor = config.text_color || defaultConfig.text_color;
+      const primaryActionColor = config.primary_action_color || defaultConfig.primary_action_color;
+      const secondaryActionColor = config.secondary_action_color || defaultConfig.secondary_action_color;
+      const fontFamily = config.font_family || defaultConfig.font_family;
+      const fontSize = config.font_size || defaultConfig.font_size;
+
+      document.getElementById('app-title').textContent = appTitle;
+      document.getElementById('class-name').textContent = className;
+      document.getElementById('teacher-name').textContent = teacherName;
+
+      document.body.style.background = `linear-gradient(135deg, ${backgroundColor} 0%, ${backgroundColor} 100%)`;
+      
+      const surfaces = document.querySelectorAll('.header, .attendance-section, .sidebar');
+      surfaces.forEach(surface => {
+        surface.style.backgroundColor = surfaceColor;
+      });
+
+      document.querySelector('.header h1').style.color = primaryActionColor;
+      
+      const buttons = document.querySelectorAll('.btn-primary');
+      buttons.forEach(btn => {
+        btn.style.backgroundColor = primaryActionColor;
+      });
+
+      const successButtons = document.querySelectorAll('.btn-success');
+      successButtons.forEach(btn => {
+        btn.style.backgroundColor = secondaryActionColor;
+      });
+
+      const baseFontStack = '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif';
+      document.body.style.fontFamily = `${fontFamily}, ${baseFontStack}`;
+
+      document.querySelector('.header h1').style.fontSize = `${fontSize * 2.5}px`;
+      document.querySelectorAll('.section-title').forEach(el => el.style.fontSize = `${fontSize * 1.5}px`);
+      document.querySelectorAll('.btn').forEach(el => el.style.fontSize = `${fontSize * 1}px`);
+      document.querySelectorAll('.form-input').forEach(el => el.style.fontSize = `${fontSize * 1}px`);
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.background_color || defaultConfig.background_color,
+              set: (value) => {
+                config.background_color = value;
+                window.elementSdk.setConfig({ background_color: value });
+              }
+            },
+            {
+              get: () => config.surface_color || defaultConfig.surface_color,
+              set: (value) => {
+                config.surface_color = value;
+                window.elementSdk.setConfig({ surface_color: value });
+              }
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (value) => {
+                config.text_color = value;
+                window.elementSdk.setConfig({ text_color: value });
+              }
+            },
+            {
+              get: () => config.primary_action_color || defaultConfig.primary_action_color,
+              set: (value) => {
+                config.primary_action_color = value;
+                window.elementSdk.setConfig({ primary_action_color: value });
+              }
+            },
+            {
+              get: () => config.secondary_action_color || defaultConfig.secondary_action_color,
+              set: (value) => {
+                config.secondary_action_color = value;
+                window.elementSdk.setConfig({ secondary_action_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => config.font_family || defaultConfig.font_family,
+            set: (value) => {
+              config.font_family = value;
+              window.elementSdk.setConfig({ font_family: value });
+            }
+          },
+          fontSizeable: {
+            get: () => config.font_size || defaultConfig.font_size,
+            set: (value) => {
+              config.font_size = value;
+              window.elementSdk.setConfig({ font_size: value });
+            }
+          }
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ["app_title", config.app_title || defaultConfig.app_title],
+          ["class_name", config.class_name || defaultConfig.class_name],
+          ["teacher_name", config.teacher_name || defaultConfig.teacher_name]
+        ])
+      });
+    }
+
+    initializeApp();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'997d86b4e00133ea',t:'MTc2MjAyMjQ4NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
